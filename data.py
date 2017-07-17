@@ -28,7 +28,7 @@ from sklearn.model_selection import train_test_split
 
 read_or_generate_data = True
 save_image = False
-npixel = 96
+npixel = (96,96)
 wd_path = '/home/kevin/Desktop/OpenFoodFacts/'
 
 if read_or_generate_data:
@@ -73,11 +73,11 @@ else:
         pic = pic.resize((npixel,npixel))
         data_as_array = np.asarray(pic)
         
-        if data_as_array.shape == (npixel,npixel,3):
-            data = data_as_array.reshape(1, npixel**2*3)
+        if data_as_array.shape == (npixel[0],npixel[1],3):
+            data = data_as_array.reshape(1, npixel[0]*npixel[1]*3)
         else:
             #If problem of shape I assume the image is totally black
-            data = np.zeros(npixel*npixel*3)
+            data = np.zeros(npixel[0]*npixel[1]*3)
         
         
         return data
