@@ -29,13 +29,13 @@ from sklearn.model_selection import train_test_split
 read_or_generate_data = True
 save_image = False
 npixel = (96,96)
-wd_path = '/home/kevin/Desktop/OpenFoodFacts/'
+wd_path = '/home/kevin/Desktop/OpenFoodFacts/OpenFoodFacts/data/csv'
 
 if read_or_generate_data:
     data_path = os.path.join(wd_path, 'data.csv')
     mydata = pd.read_csv(data_path)
-    X = np.array(mydata.drop('label'))
     Y = np.array(mydata['label'])
+    X = np.array(mydata.drop('label'))
 
 else:  
     url = "http://world.openfoodfacts.org/data/en.openfoodfacts.org.products.csv"
@@ -62,15 +62,24 @@ else:
             Downloads the image from image_url and saves it
             in the working directory
             
+            Arguments:
+                * image_url: the url of the image
+                * npixel: a tuple (image_width, image_height) in number of pixelq
+                * image_name: the name to save in the wd for the downloaded image
+                * save: a boolean. If True, we save the image
+            
+            Returns:
+                * data: the image in numpy array format
+            
         """
         r = requests.get(image_url)
         pic = Image.open(BytesIO(r.content))
         if save:
-            path = '/home/kevin/Desktop/OpenFoodFacts/'
+            path = '/home/kevin/Desktop/OpenFoodFacts/OpenFoodFacts/data/images'
             pic.save(os.path.join(path, image_name))
             print("Saving the image {} in working directory".format(image_name))
             
-        pic = pic.resize((npixel,npixel))
+        pic = pic.resize((npixel[0],npixel[1]))
         data_as_array = np.asarray(pic)
         
         if data_as_array.shape == (npixel[0],npixel[1],3):
@@ -84,9 +93,7 @@ else:
     
     print("On va télécharger {} images. \n".format(len(two_classes_data.image_url)) )
     print("Attention, cette opération peut prendre du temps")
-    mydata = two_classes_data.apply(lambda x: image_url_to_nparray(x['image_url']),
-                                    x['image_url'][44:].replace('/',''), 
-                                    axis = 1)
+    mydata = two_classes_data.apply(lambda x: image_url_to_nparray(x['image_url']), x['image_url'][44:].replace('/',''), axis = 1)
     
     trainingY = two_classes_data.brands
     
