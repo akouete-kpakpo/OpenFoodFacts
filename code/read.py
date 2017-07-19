@@ -24,7 +24,7 @@ def read_from_disk(path, npixel = (300, 400)):
         Returns:
             *data: a numpy array where each example is one image 
     """
-    imgs = np.empty(shape = (1, npixel[1], npixel[0], 3) )
+    imgs = np.empty(shape = (1, npixel[1]*npixel[0]*3 + 1) )
     #image_list = map(Image.open, glob('your/path/*.gif'))
     assert os.path.exists(path)
     print("Attention! Chargement de {} images! \n".format(len(os.listdir(path))))
@@ -35,13 +35,14 @@ def read_from_disk(path, npixel = (300, 400)):
         img = Image.open(os.path.join(path,f))
         img = img.resize((npixel[0],npixel[1]))
         x = img_to_array(img)
-        x = x.reshape((1,) + x.shape)
-        if x.shape != (1, npixel[1], npixel[0], 3):
-            #The image is black
-            x = np.zeros((1, npixel[1], npixel[0], 3))
-            print("The image {} is black.".format(f))
-        imgs = np.vstack([imgs, x])
-    
+        x = x.reshape(1,-1)
+##        x = np.array([f,x])
+#        if x.shape != (1, npixel[1]*npixel[0]*3 + 1):
+#            #The image is black
+#            x = np.zeros((1, npixel[1]*npixel[0]*3 + 1))
+#            print("The image {} is black.".format(f))
+#        imgs = np.vstack([imgs, x])
+#    
     return imgs
 
 def read_csv_data_from_disk(path):
@@ -63,6 +64,8 @@ if __name__ == '__main__':
     csv_path = "/home/kevin/Desktop/OpenFoodFacts/OpenFoodFacts/data/csv"
     npixel = (300,400)
     data1 = read_from_disk(images_path)
+    #TODO: cette opération prend du temps
+    #Afficher une jauge de progression plutôt que le nom des images ajoutées
     np.savetxt(os.path.join(csv_path, "data.csv"),
                data1.reshape((data1.shape[0],-1)), 
                delimiter=",")

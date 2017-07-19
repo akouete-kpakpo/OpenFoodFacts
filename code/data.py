@@ -26,13 +26,14 @@ from sklearn.model_selection import train_test_split
 ##### DATA  ########
 ####################
 
-read_or_generate_data = True
-save_image = False
-npixel = (96,96)
+read_or_generate_data = False
+save_image = True
+npixel = (300,400)
 wd_path = '/home/kevin/Desktop/OpenFoodFacts/OpenFoodFacts/data/csv'
 
 if read_or_generate_data:
     data_path = os.path.join(wd_path, 'data.csv')
+    assert os.path.exists(data_path)
     mydata = pd.read_csv(data_path)
     Y = np.array(mydata['label'])
     X = np.array(mydata.drop('label'))
@@ -54,9 +55,15 @@ else:
     two_classes_data = two_classes_data.reset_index()
     del two_classes_data['index']
     
+    two_classes_data['image_name'] = two_classes_data.image_url.str[44:].str.replace('/','')
+    labels = two_classes_data.loc[:,['brands','image_name']].set_index('image_name')
+    labels.rename(columns = {'brands':'label'}, inplace = True)
+    labels.to_csv(os.path.join(wd_path,'labels.csv'))
     #TODO: pour les images de mauvaises tailles regarder en détail
     #image_url = 'http://en.openfoodfacts.org/images/products/324/541/417/2081/front.4.400.jpg'
-    def image_url_to_nparray(image_url, npixel=npixel, image_name = 'image', 
+    
+    
+    def image_url_to_nparray(image_url, image_name = 'image', npixel=npixel,
                              save = save_image):
         """
             Downloads the image from image_url and saves it
@@ -64,7 +71,7 @@ else:
             
             Arguments:
                 * image_url: the url of the image
-                * npixel: a tuple (image_width, image_height) in number of pixelq
+                * npixel: a tuple (image_width, image_height) in number of pixels
                 * image_name: the name to save in the wd for the downloaded image
                 * save: a boolean. If True, we save the image
             
@@ -77,12 +84,12 @@ else:
         if save:
             path = '/home/kevin/Desktop/OpenFoodFacts/OpenFoodFacts/data/images'
             pic.save(os.path.join(path, image_name))
-            print("Saving the image {} in working directory".format(image_name))
+            print("Saving the image {} in working directory \n".format(image_name))
             
         pic = pic.resize((npixel[0],npixel[1]))
         data_as_array = np.asarray(pic)
         
-        if data_as_array.shape == (npixel[0],npixel[1],3):
+        if data_as_array.shape == (npixel[1],npixel[0],3):
             data = data_as_array.reshape(1, npixel[0]*npixel[1]*3)
         else:
             #If problem of shape I assume the image is totally black
@@ -93,7 +100,10 @@ else:
     
     print("On va télécharger {} images. \n".format(len(two_classes_data.image_url)) )
     print("Attention, cette opération peut prendre du temps")
-    mydata = two_classes_data.apply(lambda x: image_url_to_nparray(x['image_url']), x['image_url'][44:].replace('/',''), axis = 1)
+    
+    mydata = pd.DataFrame()
+    mydata = two_classes_data.apply(lambda x: image_url_to_nparray(x['image_url'], 
+                                                                   x['image_url'][44:].replace('/','')), axis = 1)
     
     trainingY = two_classes_data.brands
     
