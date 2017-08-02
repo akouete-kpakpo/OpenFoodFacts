@@ -15,7 +15,7 @@ from keras.preprocessing.image import (img_to_array,
                                        #load_img
                                        )
 
-def read_from_disk(path, npixel = (300, 400), nimages = 1000, nbatches = 10):
+def read_from_disk(path, npixel = (300, 400), nimages = 1044, nbatches = 10):
     """
         Reads the images data stored on the disk
         
@@ -45,10 +45,11 @@ def read_from_disk(path, npixel = (300, 400), nimages = 1000, nbatches = 10):
         img = img.resize((npixel[0],npixel[1]))
         x = img_to_array(img)
         x = x.astype(np.uint8)
-        x = x.reshape(1,-1)
-        if x.shape != (1, npixel[1]*npixel[0]*3):
+        #x = x.reshape(1,-1)
+        x = np.expand_dims(x, axis=0)
+        if x.shape != (1, npixel[1],npixel[0],3):
             #The image is black
-            x = np.zeros((1, npixel[1]*npixel[0]*3))
+            x = np.zeros((1, npixel[1],npixel[0],3))
             print("The image {} is black.".format(f))
         imgs = np.vstack([imgs, x])
 ##        x = np.array([f,x])
@@ -61,11 +62,11 @@ def read_from_disk(path, npixel = (300, 400), nimages = 1000, nbatches = 10):
     
     
     n = 2*nimages//nbatches
-    data = np.empty(shape = (0,n,npixel[1]*npixel[0]*3))
+    data = np.empty(shape = (0,n,npixel[1],npixel[0],3))
     labels = np.empty(shape = (0,n))
     for batch in range(nbatches):
         s = np.arange(n*batch,n*(batch+1))
-        imgs = np.empty(shape = (0, npixel[1]*npixel[0]*3), dtype = np.uint8)
+        imgs = np.empty(shape = (0, npixel[1],npixel[0],3), dtype = np.uint8)
         batch_label = np.array([])
         for f in images[s]:
             if f.startswith('a'):
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     imgs_np_path = os.path.join(np_path, 'images.npy')
     labels_np_path = os.path.join(np_path, 'labels.npy')
     npixel = (300,400)
-    (data, labels) = read_from_disk(images_path, nimages=10)
+    (data, labels) = read_from_disk(images_path)
     #TODO: cette opération prend du temps
     #Afficher une jauge de progression plutôt que le nom des images ajoutées
     np.save(imgs_np_path, data)
