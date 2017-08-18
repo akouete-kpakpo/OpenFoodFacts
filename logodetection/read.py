@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul 19 11:44:25 2017
-
-@author: kevin
+This class reads the data stored on disk
 """
 
-import os, os.path
+from os.path import join, exists
+from os import listdir
 import numpy as np
 import pandas as pd
 from itertools import chain
 from PIL import Image
-from keras.preprocessing.image import (img_to_array, 
-                                       #load_img
-                                       )
+from keras.preprocessing.image import img_to_array
 
-def read_from_disk(path, npixel = (96, 96), nimages = 1044, nbatches = 10):
+from logodetection.config import image_directory, np_directory
+
+def read_from_disk(path = image_directory, npixel = (96, 96), 
+                   nimages = 1044, nbatches = 10):
     """
-        Reads the images data stored on the disk
+        Reads all the images data stored on the disk into one array
         
         Arguments:
             *path: the path of the disk directory containing the images data
@@ -29,19 +29,24 @@ def read_from_disk(path, npixel = (96, 96), nimages = 1044, nbatches = 10):
             *data: a numpy array where each example is one image 
     """
 
-    assert os.path.exists(path)
+    assert exists(path)
     print("Attention! Chargement de {} images! \n".format(2*nimages))
     print("Cette opération peut prendre du temps.")
     
-    images = pd.Series(os.listdir(path))
+    images = pd.Series(listdir(path))
+    
+    # This part is to have one label after the other
     b = list(map(lambda x: x.startswith('a'), images))
     auchan_images = images[b]
     carrefour_images = images[[not x for x in b]]
-    images = pd.Series(list(chain.from_iterable(zip( auchan_images.iloc[:nimages], 
-                                          carrefour_images.iloc[:nimages]))))
+    images = pd.Series(list(chain.from_iterable(zip(auchan_images.iloc[:nimages], 
+                                                    carrefour_images.iloc[:nimages]))))
+    
+    nsubimg = 3*4
     def _add_img_to_array(imgs,img_name):
-        print("Ajout de l'image {} au dataset".format(img_name))
-        img = Image.open(os.path.join(path,img_name))
+        info = "Ajout de {nsubimg} sous-images de l'image {img_name} au dataset"
+        print(info.format(nsubimg = nsubimg,img_name = img_name))
+        img = Image.open(join(path, img_name))
         img = img.resize((npixel[0]*3,npixel[1]*4))
         
         if img_to_array(img).shape != (npixel[1]*4,npixel[0]*3,3):
@@ -67,7 +72,7 @@ def read_from_disk(path, npixel = (96, 96), nimages = 1044, nbatches = 10):
         
         return imgs
     
-    nsubimg = 3*4
+    
     n_images_per_batch = 2*nimages//nbatches
     n_sub_images_per_batch = 2*nimages//nbatches*nsubimg
     data = np.empty(shape = (0,n_sub_images_per_batch,npixel[1],npixel[0],3))
@@ -90,32 +95,32 @@ def read_from_disk(path, npixel = (96, 96), nimages = 1044, nbatches = 10):
     
     return data, labels
 
-def read_csv_data_from_disk(path):
+def read_np_data_from_disk(path):
     """
-        Reads a csv file stored on disk
+        Reads a numpy file stored on disk
         
         Arguments:
-            *path: the path of the csv data on the disk
+            *path: the path of the numpy data on the disk
         
         Returns:
             *data: as a numpy array
     """
-    assert os.path.exists(path)
-    data = np.genfromtxt(path, delimiter=',')
+    assert exists(path)
+    data = np.load(path)
     return data
 
 if __name__ == '__main__':
-    images_path = "/home/kevin/Desktop/OpenFoodFacts/data/images"
-    csv_path = "/home/kevin/Desktop/OpenFoodFacts/data/csv"
-    np_path = '/home/kevin/Desktop/OpenFoodFacts/data/npy'
-    imgs_np_path = os.path.join(np_path, 'images.npy')
-    labels_np_path = os.path.join(np_path, 'labels.npy')
-    npixel = (96,96)
-    (data, labels) = read_from_disk(images_path)
+    
+    imgs_np_path = join(np_directory, 'images.npy')
+    labels_np_path = join(np_directory, 'labels.npy')
+    
+    #### GENERATE DATA AND SAVE ####
+    (data, labels) = read_from_disk()
     #TODO: cette opération prend du temps
     #Afficher une jauge de progression plutôt que le nom des images ajoutées
     np.save(imgs_np_path, data)
     np.save(labels_np_path, labels)
-    #data2 = read_csv_data_from_disk(os.path.join(csv_path, 'data.csv'))
-    Y = np.load(labels_np_path)
-    X = np.load(imgs_np_path)
+    
+    ##### LOAD DATA #####
+    Y = read_np_data_from_disk(labels_np_path)
+    X = read_np_data_from_disk(imgs_np_path)
