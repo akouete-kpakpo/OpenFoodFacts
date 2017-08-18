@@ -95,32 +95,39 @@ def read_from_disk(path = image_directory, npixel = (96, 96),
     
     return data, labels
 
-def read_np_data_from_disk(path):
+def loadX():
+    """      
     """
-        Reads a numpy file stored on disk
-        
-        Arguments:
-            *path: the path of the numpy data on the disk
-        
-        Returns:
-            *data: as a numpy array
-    """
-    assert exists(path)
-    data = np.load(path)
-    return data
+    imgs_np_path = join(np_directory, 'images.npy')
+    X_raw = np.load(imgs_np_path)
+    nbatches = X_raw.shape[0]
+    npixel = (96,96)
+    X = np.empty(shape = (0, npixel[1],npixel[0],3), dtype = np.uint8)
+    for batch in range(nbatches):
+        X = np.vstack([X, X_raw[batch,:,:,:,:]])
+    return X
 
+
+def loadY():
+    """
+    """
+    labels_np_path = join(np_directory, 'labels.npy')
+    Y_raw =  np.load(labels_np_path)
+    nbatches = Y_raw.shape[0]
+    Y = np.array([])
+    for batch in range(nbatches):
+        Y = np.hstack([Y, Y_raw[batch,:]])
+        
+    return Y
+    
 if __name__ == '__main__':
     
-    imgs_np_path = join(np_directory, 'images.npy')
-    labels_np_path = join(np_directory, 'labels.npy')
     
     #### GENERATE DATA AND SAVE ####
     (data, labels) = read_from_disk()
     #TODO: cette opération prend du temps
     #Afficher une jauge de progression plutôt que le nom des images ajoutées
-    np.save(imgs_np_path, data)
-    np.save(labels_np_path, labels)
     
     ##### LOAD DATA #####
-    Y = read_np_data_from_disk(labels_np_path)
-    X = read_np_data_from_disk(imgs_np_path)
+    Y = loadY()
+    X = loadX()
